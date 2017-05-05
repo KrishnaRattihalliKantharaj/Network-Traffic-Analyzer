@@ -20,18 +20,14 @@ def index(request):
 
 
 def printRecord(tgt):
-    print("\nhere" + tgt)
     rec = gi.record_by_name(tgt)
-    print(rec)
     if(rec is None):
         return
     else:
         city = rec['city']
-        print(city)
         country = rec['country_name']
         long = rec['longitude']
         lat = rec['latitude']
-        print (lat)
         return (tgt, lat, long, city, country)
 
 
@@ -59,6 +55,42 @@ def printPcap(pcap):
             pass
     return uniqueLatLong
 
+def findDownload(pcap):
+    for (ts, buf) in pcap:
+        # Unpack the Ethernet frame (mac src/dst, ethertype)
+        eth = dpkt.ethernet.Ethernet(buf)
+
+        # Make sure the Ethernet data contains an IP packet
+        if not isinstance(eth.data, dpkt.ip.IP):
+            print ('Non IP Packet type not supported %s\n' % eth.data.__class__.__name__)
+            continue
+
+        # Now grab the data within the Ethernet frame (the IP packet)
+        ip = eth.data
+        src = socket.inet_ntoa(ip.src)
+
+        # Check for TCP in the transport layer
+        if isinstance(ip.data, dpkt.tcp.TCP):
+
+            # Set the TCP data
+            tcp = ip.data
+
+            # Now see if we can parse the contents as a HTTP request
+            try:
+                http = dpkt.http.Request(tcp.data)
+                if http.method == 'GET':
+                    uri = http.uri.lower()
+                    if '.zip' in uri and 'loic' in uri:
+                        print("\nURL = " + uri)
+                        print ('[!] ' + src + ' Downloaded LOIC.')
+                    else:
+                        print("\nNo Zip File Downloaded\n")
+            except (dpkt.dpkt.NeedData, dpkt.dpkt.UnpackError):
+                continue
+        else:
+             print("\nNo TCP in transport layer in the given Pcap file.\n")
+
+
 @csrf_exempt
 def search(request):
     pcapFile = request.FILES['file_upload']
@@ -67,11 +99,16 @@ def search(request):
     uploaded_file_url = fs.url(filename)
     f = open(uploaded_file_url, 'rb')
     pcap = dpkt.pcap.Reader(f)
-    unique = printPcap(pcap)
-    print("\nreached6")
+
+    filename1 = fs.save(pcapFile.name, pcapFile)
+    uploaded_file_url1 = fs.url(filename1)
+    f1 = open(uploaded_file_url1, 'rb')
+    pcap1 = dpkt.pcap.Reader(f1)
+
+    unique = printPcap(pcap1)
+    findDownload(pcap)
     js = []
     for item in unique:
-        print("\nitem after 6 = " + str(item))
         obj = {"IP": str(item[0]), "Lat": str(item[1]), "Long": str(item[2]), "City": str(item[3]),
                "Country": str(item[4])}
         js.append(obj)
