@@ -12,9 +12,6 @@ from django.shortcuts import render
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.shortcuts import render_to_response
-import threading
-from threading import Thread
-
 
 
 gi = pygeoip.GeoIP('GeoLiteCity.dat')
@@ -31,12 +28,14 @@ def printRecord(tgt):
         country = rec['country_name']
         long = rec['longitude']
         lat = rec['latitude']
-    return (tgt, lat, long, city, country)
+        return (tgt, lat, long, city, country)
 
 
-def printPcap(pcp):
+def printPcap(uploaded_file_url):
+    f1 = open(uploaded_file_url, 'rb')
+    pcap = dpkt.pcap.Reader(f1)
     uniqueIP = set()
-    for (ts, buf) in pcp:
+    for (ts, buf) in pcap:
         try:
             eth = dpkt.ethernet.Ethernet(buf)
             ip = eth.data
@@ -58,14 +57,16 @@ def printPcap(pcp):
             pass
     return uniqueLatLong
 
-def findDownload(pcp2):
-    for (ts, buf) in pcp2:
+def findDownload(uploaded_file_url):
+    f = open(uploaded_file_url, 'rb')
+    pcap = dpkt.pcap.Reader(f)
+    for (ts, buf) in pcap:
         # Unpack the Ethernet frame (mac src/dst, ethertype)
         eth = dpkt.ethernet.Ethernet(buf)
 
         # Make sure the Ethernet data contains an IP packet
         if not isinstance(eth.data, dpkt.ip.IP):
-            print ('Non IP Packet type not supported %s\n' % eth.data.__class__.__name__)
+            #print ('Non IP Packet type not supported %s\n' % eth.data.__class__.__name__)
             continue
 
         # Now grab the data within the Ethernet frame (the IP packet)
@@ -83,15 +84,13 @@ def findDownload(pcp2):
                 http = dpkt.http.Request(tcp.data)
                 if http.method == 'GET':
                     uri = http.uri.lower()
-                    if '.zip' in uri and 'loic' in uri:
+                    if '.zip' in uri or '.ZIP' in uri:
                         print("\nURL = " + uri)
                         print ('[!] ' + src + ' Downloaded LOIC.')
                     else:
-                        print("\nNo Zip File Downloaded\n")
+                        print("\nNo ZIP File Downloaded\n")
             except (dpkt.dpkt.NeedData, dpkt.dpkt.UnpackError):
                 continue
-        else:
-             print("\nNo TCP in transport layer in the given Pcap file.\n")
 
 
 @csrf_exempt
@@ -100,17 +99,8 @@ def search(request):
     fs = FileSystemStorage()
     filename = fs.save(pcapFile.name, pcapFile)
     uploaded_file_url = fs.url(filename)
-    f = open(uploaded_file_url, 'rb')
-    pcap = dpkt.pcap.Reader(f)
-
-    filename1 = fs.save(pcapFile.name, pcapFile)
-    uploaded_file_url1 = fs.url(filename1)
-    f1 = open(uploaded_file_url1, 'rb')
-    pcap = dpkt.pcap.Reader(f1)
-
-    args=pcap;
-    unique = printPcap(**args)
-    findDownload(**args)
+    unique = printPcap(uploaded_file_url)
+    findDownload(uploaded_file_url)
     js = []
     for item in unique:
         obj = {"IP": str(item[0]), "Lat": str(item[1]), "Long": str(item[2]), "City": str(item[3]),
