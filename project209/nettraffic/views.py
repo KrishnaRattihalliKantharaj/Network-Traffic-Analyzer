@@ -12,6 +12,9 @@ from django.shortcuts import render
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.shortcuts import render_to_response
+import threading
+from threading import Thread
+
 
 
 gi = pygeoip.GeoIP('GeoLiteCity.dat')
@@ -28,12 +31,12 @@ def printRecord(tgt):
         country = rec['country_name']
         long = rec['longitude']
         lat = rec['latitude']
-        return (tgt, lat, long, city, country)
+    return (tgt, lat, long, city, country)
 
 
-def printPcap(pcap):
+def printPcap(pcp):
     uniqueIP = set()
-    for (ts, buf) in pcap:
+    for (ts, buf) in pcp:
         try:
             eth = dpkt.ethernet.Ethernet(buf)
             ip = eth.data
@@ -55,8 +58,8 @@ def printPcap(pcap):
             pass
     return uniqueLatLong
 
-def findDownload(pcap):
-    for (ts, buf) in pcap:
+def findDownload(pcp2):
+    for (ts, buf) in pcp2:
         # Unpack the Ethernet frame (mac src/dst, ethertype)
         eth = dpkt.ethernet.Ethernet(buf)
 
@@ -103,10 +106,11 @@ def search(request):
     filename1 = fs.save(pcapFile.name, pcapFile)
     uploaded_file_url1 = fs.url(filename1)
     f1 = open(uploaded_file_url1, 'rb')
-    pcap1 = dpkt.pcap.Reader(f1)
+    pcap = dpkt.pcap.Reader(f1)
 
-    unique = printPcap(pcap1)
-    findDownload(pcap)
+    args=pcap;
+    unique = printPcap(**args)
+    findDownload(**args)
     js = []
     for item in unique:
         obj = {"IP": str(item[0]), "Lat": str(item[1]), "Long": str(item[2]), "City": str(item[3]),
