@@ -3,22 +3,36 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.template import Template, Context
 from django.template.loader import get_template
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 import dpkt
 import socket
 import pygeoip
+from django.shortcuts import render
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
+from django.shortcuts import render_to_response
 
-gi = pygeoip.GeoIP('C:\Users\Krishna.R.K\Downloads\GeoIP.dat')
+
+gi = pygeoip.GeoIP('GeoLiteCity.dat')
 def index(request):
     return render(request,'home.html')
 
 
 def printRecord(tgt):
+    print("\nhere" + tgt)
     rec = gi.record_by_name(tgt)
-    city = rec['city']
-    country = rec['country_name']
-    long = rec['longitude']
-    lat = rec['latitude']
-    return (tgt, lat, long, city, country)
+    print(rec)
+    if(rec is None):
+        return
+    else:
+        city = rec['city']
+        print(city)
+        country = rec['country_name']
+        long = rec['longitude']
+        lat = rec['latitude']
+        print (lat)
+        return (tgt, lat, long, city, country)
 
 
 def printPcap(pcap):
@@ -32,29 +46,32 @@ def printPcap(pcap):
             uniqueIP.add(src)
         except:
             pass
-
     uniqueLatLong = set()
     for item in uniqueIP:
 
         try:
-            uniqueLatLong.add(printRecord(item))
+            Ull = printRecord(item)
+            if (Ull is not None):
+                uniqueLatLong.add(Ull)
+            #uniqueLatLong.add(printRecord('130.65.10.101'))
+            #uniqueLatLong.add(printRecord('130.65.136.10'))
         except:
             pass
     return uniqueLatLong
-    print "Unique Lat Long :"
 
-
+@csrf_exempt
 def search(request):
-    #pcapFile = 'C:\Users\Krishna.R.K\Desktop\project209'+request.GET['file_upload']
-    print "ha ha"
-    f = open('c:\\Users\\Krishna.R.K\\Desktop\\project209\\6.nmap-sA.pcap')
+    pcapFile = request.FILES['file_upload']
+    fs = FileSystemStorage()
+    filename = fs.save(pcapFile.name, pcapFile)
+    uploaded_file_url = fs.url(filename)
+    f = open(uploaded_file_url, 'rb')
     pcap = dpkt.pcap.Reader(f)
     unique = printPcap(pcap)
-    print "slkdfadslfjsljfsldjfslf"
-    print unique
-    print "slkdfadslfjsljfsldjfslf"
+    print("\nreached6")
     js = []
     for item in unique:
+        print("\nitem after 6 = " + str(item))
         obj = {"IP": str(item[0]), "Lat": str(item[1]), "Long": str(item[2]), "City": str(item[3]),
                "Country": str(item[4])}
         js.append(obj)
@@ -63,11 +80,5 @@ def search(request):
         ip = str(item[0])
         city = str(item[3])
         country = str(item[4])
-    print js
 
-    fp = open('C:\\Users\\Krishna.R.K\\Desktop\\project209\\templates\\results.html')
-
-    t = Template(fp.read())
-    fp.close()
-    html = t.render(Context({'data': js}))
-    return HttpResponse(html)
+    return HttpResponse(render_to_response('results.html', {'data': js}))
