@@ -66,7 +66,7 @@ def findDownload(uploaded_file_url):
 
         # Make sure the Ethernet data contains an IP packet
         if not isinstance(eth.data, dpkt.ip.IP):
-            print ('Non IP Packet type not supported %s\n' % eth.data.__class__.__name__)
+            #print ('Non IP Packet type not supported %s\n' % eth.data.__class__.__name__)
             continue
 
         # Now grab the data within the Ethernet frame (the IP packet)
@@ -84,15 +84,13 @@ def findDownload(uploaded_file_url):
                 http = dpkt.http.Request(tcp.data)
                 if http.method == 'GET':
                     uri = http.uri.lower()
-                    if '.pdf' in uri and 'loic' in uri:
+                    if '.zip' in uri or '.ZIP' in uri:
                         print("\nURL = " + uri)
                         print ('[!] ' + src + ' Downloaded LOIC.')
                     else:
-                        print("\nNo Zip File Downloaded\n")
+                        print("\nNo ZIP File Downloaded\n")
             except (dpkt.dpkt.NeedData, dpkt.dpkt.UnpackError):
                 continue
-        else:
-             print("\nNo TCP in transport layer in the given Pcap file.\n")
 
 
 @csrf_exempt
