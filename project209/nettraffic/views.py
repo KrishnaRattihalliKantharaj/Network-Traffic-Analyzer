@@ -31,7 +31,9 @@ def printRecord(tgt):
         return (tgt, lat, long, city, country)
 
 
-def printPcap(pcap):
+def printPcap(uploaded_file_url):
+    f1 = open(uploaded_file_url, 'rb')
+    pcap = dpkt.pcap.Reader(f1)
     uniqueIP = set()
     for (ts, buf) in pcap:
         try:
@@ -55,7 +57,9 @@ def printPcap(pcap):
             pass
     return uniqueLatLong
 
-def findDownload(pcap):
+def findDownload(uploaded_file_url):
+    f = open(uploaded_file_url, 'rb')
+    pcap = dpkt.pcap.Reader(f)
     for (ts, buf) in pcap:
         # Unpack the Ethernet frame (mac src/dst, ethertype)
         eth = dpkt.ethernet.Ethernet(buf)
@@ -80,7 +84,7 @@ def findDownload(pcap):
                 http = dpkt.http.Request(tcp.data)
                 if http.method == 'GET':
                     uri = http.uri.lower()
-                    if '.zip' in uri and 'loic' in uri:
+                    if '.pdf' in uri and 'loic' in uri:
                         print("\nURL = " + uri)
                         print ('[!] ' + src + ' Downloaded LOIC.')
                     else:
@@ -97,16 +101,8 @@ def search(request):
     fs = FileSystemStorage()
     filename = fs.save(pcapFile.name, pcapFile)
     uploaded_file_url = fs.url(filename)
-    f = open(uploaded_file_url, 'rb')
-    pcap = dpkt.pcap.Reader(f)
-
-    filename1 = fs.save(pcapFile.name, pcapFile)
-    uploaded_file_url1 = fs.url(filename1)
-    f1 = open(uploaded_file_url1, 'rb')
-    pcap1 = dpkt.pcap.Reader(f1)
-
-    unique = printPcap(pcap1)
-    findDownload(pcap)
+    unique = printPcap(uploaded_file_url)
+    findDownload(uploaded_file_url)
     js = []
     for item in unique:
         obj = {"IP": str(item[0]), "Lat": str(item[1]), "Long": str(item[2]), "City": str(item[3]),
