@@ -31,66 +31,67 @@ def printRecord(tgt):
         return (tgt, lat, long, city, country)
 
 
+def checkBLSiteAccess(src, dst):
+    blacklistedSites = {
+        '10.250.197.182'
+    }
+    if(dst in blacklistedSites):
+        print("\n Black Listed IP destination accessed by = " + src)
+        uniqueLatLong = printRecord(src)
+        return uniqueLatLong
+    else:
+        return 0
+
 def printPcap(uploaded_file_url):
     f1 = open(uploaded_file_url, 'rb')
     pcap = dpkt.pcap.Reader(f1)
-    uniqueIP = set()
+    src = ""
+    srcDst = {}
+    uniqueSrc = set()
     for (ts, buf) in pcap:
         try:
             eth = dpkt.ethernet.Ethernet(buf)
             ip = eth.data
             src = socket.inet_ntoa(ip.src)
             dst = socket.inet_ntoa(ip.dst)
-            uniqueIP.add(src)
+            if src not in uniqueSrc:
+                uniqueSrc.add(src)
+                srcDst[src] = dst
         except:
             pass
-    uniqueLatLong = set()
-    for item in uniqueIP:
-
-        try:
-            Ull = printRecord(item)
-            if (Ull is not None):
-                uniqueLatLong.add(Ull)
-            #uniqueLatLong.add(printRecord('130.65.10.101'))
-            #uniqueLatLong.add(printRecord('130.65.136.10'))
-        except:
-            pass
-    return uniqueLatLong
+    BLAccess = set()
+    #print(srcDst)
+    for src in uniqueSrc:
+        found = checkBLSiteAccess(src, srcDst[src])
+        if found and found is not None:
+            BLAccess.add(found)
+    return BLAccess
 
 def findDownload(uploaded_file_url):
+    anythingDownloaded = "false"
     f = open(uploaded_file_url, 'rb')
     pcap = dpkt.pcap.Reader(f)
     for (ts, buf) in pcap:
-        # Unpack the Ethernet frame (mac src/dst, ethertype)
-        eth = dpkt.ethernet.Ethernet(buf)
+        eth = dpkt.ethernet.Ethernet(buf)               # Unpack the Ethernet frame (mac src/dst, ethertype)
 
-        # Make sure the Ethernet data contains an IP packet
-        if not isinstance(eth.data, dpkt.ip.IP):
-            #print ('Non IP Packet type not supported %s\n' % eth.data.__class__.__name__)
-            continue
+        if not isinstance(eth.data, dpkt.ip.IP):        # Make sure the Ethernet data contains an IP packet
+            continue                                    #print ('Non IP Packet type not supported %s\n' % eth.data.__class__.__name__)
 
-        # Now grab the data within the Ethernet frame (the IP packet)
-        ip = eth.data
+        ip = eth.data                                   # Now grab the data within the Ethernet frame (the IP packet)
         src = socket.inet_ntoa(ip.src)
-
-        # Check for TCP in the transport layer
-        if isinstance(ip.data, dpkt.tcp.TCP):
-
-            # Set the TCP data
-            tcp = ip.data
-
-            # Now see if we can parse the contents as a HTTP request
-            try:
+        if isinstance(ip.data, dpkt.tcp.TCP):           # Check for TCP in the transport layer
+            tcp = ip.data                               # Set the TCP data
+            try:                                        # Now see if we can parse the contents as a HTTP request
                 http = dpkt.http.Request(tcp.data)
                 if http.method == 'GET':
                     uri = http.uri.lower()
                     if '.zip' in uri or '.ZIP' in uri:
-                        print("\nURL = " + uri)
-                        print ('[!] ' + src + ' Downloaded LOIC.')
-                    else:
-                        print("\nNo ZIP File Downloaded\n")
+                        anythingDownloaded = "true"
+                        print("\nZIP file downloaded by " + src + " from " + uri)
             except (dpkt.dpkt.NeedData, dpkt.dpkt.UnpackError):
                 continue
+    if (anythingDownloaded is "false"):
+        print("\nNo ZIP File Downloaded\n")
 
 
 @csrf_exempt
@@ -111,5 +112,7 @@ def search(request):
         ip = str(item[0])
         city = str(item[3])
         country = str(item[4])
-
     return HttpResponse(render_to_response('results.html', {'data': js}))
+
+
+
