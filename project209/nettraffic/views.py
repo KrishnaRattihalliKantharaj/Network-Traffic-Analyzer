@@ -66,11 +66,8 @@ def findAllIPs(request):
         filename = fs.save(pcapFile.name, pcapFile)
         uploaded_file_url = fs.url(filename)
     except:
-        print("\nFAILED SO REACHED EXCEPT")
         filename = request.GET['filename']
-        print("\n filename = " + filename)
         uploaded_file_url = fs.url(filename)
-        print("\nuploaded_file_url = " + uploaded_file_url)
         clicked = 1
     f1 = open(uploaded_file_url, 'rb')
     pcap = dpkt.pcap.Reader(f1)
@@ -137,8 +134,8 @@ def findDownloads(request):
     pcap = dpkt.pcap.Reader(f)
     src = ""
     srcDst = {}
-    uniqueSrc = set()
-    BLAccess = set()
+    IPsDownloading = set()
+    IPsDownloading_lat_long = set()
     for (ts, buf) in pcap:
         eth = dpkt.ethernet.Ethernet(buf)               # Unpack the Ethernet frame (mac src/dst, ethertype)
 
@@ -155,22 +152,17 @@ def findDownloads(request):
                 if http.method == 'GET':
                     uri = http.uri.lower()
                     if '.zip' in uri or '.ZIP' in uri:
-                        #print src
-                        uniqueSrc.add(src)
-                        print(printRecord(src))
+                        IPsDownloading.add(src)
                         srcDst[src] = dst
                         anythingDownloaded = "true"
-                        print("\nZIP file downloaded by " + src + " from " + uri)
+                        #print("\n\nZIP file downloaded by " + src + " from " + uri + "\n\n")
 
             except (dpkt.dpkt.NeedData, dpkt.dpkt.UnpackError):
                 continue
-
-    #print uniqueSrc
-
-    for src in uniqueSrc:
-        if(printRecord(src) is not None):
-            BLAccess.add(printRecord(src))
-    markers = placeMarkers(BLAccess)
+    for ip_address in IPsDownloading:
+        if(printRecord(ip_address) is not None):
+            IPsDownloading_lat_long.add(printRecord(ip_address))
+    markers = placeMarkers(IPsDownloading_lat_long)
     if (anythingDownloaded is "false"):
         print("\nNo ZIP File Downloaded\n")
 
