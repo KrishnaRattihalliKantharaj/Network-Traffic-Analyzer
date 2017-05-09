@@ -39,10 +39,6 @@ def checkBLSiteAccess(src, dst):
     else:
         return 0
 
-def extractIPs(uploaded_file_url):
-
-    return allSrcIPs
-
 
 def placeMarkers(ip_addressess):
     markers = []
