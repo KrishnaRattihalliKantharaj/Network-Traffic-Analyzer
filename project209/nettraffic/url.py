@@ -4,7 +4,6 @@ from . import views
 urlpatterns = [
     url(r'^$',views.index, name='index'),
     url(r'^findAllIPs/',views.findAllIPs),
-    url(r'^findAllIPs1/',views.findAllIPs1),
     url(r'^findBLAccessingIPs/',views.findBLAccessingIPs),
     url(r'^findDownloads/',views.findDownloads),
 ]

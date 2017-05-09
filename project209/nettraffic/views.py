@@ -20,7 +20,7 @@ def index(request):
 
 def printRecord(tgt):
     rec = gi.record_by_name(tgt)
-    print tgt
+    #print tgt
     if(rec is not None):
         city = rec['city']
         country = rec['country_name']
@@ -60,6 +60,7 @@ def placeMarkers(ip_addressess):
 @csrf_exempt
 def findAllIPs(request):
     fs = FileSystemStorage()
+    clicked = 0
     try:
         pcapFile = request.FILES['file_upload']
         filename = fs.save(pcapFile.name, pcapFile)
@@ -70,6 +71,7 @@ def findAllIPs(request):
         print("\n filename = " + filename)
         uploaded_file_url = fs.url(filename)
         print("\nuploaded_file_url = " + uploaded_file_url)
+        clicked = 1
     f1 = open(uploaded_file_url, 'rb')
     pcap = dpkt.pcap.Reader(f1)
     src = ""
@@ -92,7 +94,7 @@ def findAllIPs(request):
             allSrcIPs.add(printRecord(src))
     markers = placeMarkers(allSrcIPs)
 
-    return HttpResponse(render_to_response('results.html', {'data': markers, 'filename' : filename}))
+    return HttpResponse(render_to_response('results.html', {'data': markers, 'filename' : filename, 'clicked' : clicked}))
 
 
 def findBLAccessingIPs(request):
@@ -153,7 +155,7 @@ def findDownloads(request):
                 if http.method == 'GET':
                     uri = http.uri.lower()
                     if '.zip' in uri or '.ZIP' in uri:
-                        print src
+                        #print src
                         uniqueSrc.add(src)
                         print(printRecord(src))
                         srcDst[src] = dst
@@ -163,7 +165,7 @@ def findDownloads(request):
             except (dpkt.dpkt.NeedData, dpkt.dpkt.UnpackError):
                 continue
 
-    print uniqueSrc
+    #print uniqueSrc
 
     for src in uniqueSrc:
         if(printRecord(src) is not None):
@@ -172,7 +174,7 @@ def findDownloads(request):
     if (anythingDownloaded is "false"):
         print("\nNo ZIP File Downloaded\n")
 
-    print markers
+    #print markers
     return HttpResponse(render_to_response('results1.html', {'src':src,'uri':uri,'data':markers,'filename': filename}))
 
 
