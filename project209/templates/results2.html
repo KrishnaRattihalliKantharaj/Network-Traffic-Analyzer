@@ -41,7 +41,19 @@
 				<p><a href="/findAllIPs1?filename={{ filename|safe }}">Show all IP Addressess</a></p>
 				<p><a href="/findBLAccessingIPs?filename={{ filename|safe }}">Show IP Addressess accessing Black Listed Sites</a></p>
 				<p><a href="/findDownloads?filename={{ filename|safe }}">Show IP Addressess Downloading from Illegal Sites</a></p>
+                <script>
+                   var myData = {{data|safe}};
+                  for(i=0;i<myData.length;i++)
+                   {
+                    var r = '<h3>&nbsp&nbspIP:&nbsp&nbsp'+myData[i].IP+'</h3><br>';
+                    var s = '<h4>&nbsp&nbspCity:&nbsp&nbsp'+myData[i].City+'</h4><br>';
+                    var t = '<h4>&nbsp&nbspCountry:&nbsp&nbsp'+myData[i].Country+'</h4><br>';
+                document.write(r);
+                document.write(s);
+                document.write(t);
 
+                }
+                </script>
 			</div>
 
 			<div class="col-sm-4">
