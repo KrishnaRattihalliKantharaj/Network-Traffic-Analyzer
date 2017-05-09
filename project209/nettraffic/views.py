@@ -20,6 +20,7 @@ def index(request):
 
 def printRecord(tgt):
     rec = gi.record_by_name(tgt)
+    print tgt
     if(rec is not None):
         city = rec['city']
         country = rec['country_name']
@@ -30,7 +31,7 @@ def printRecord(tgt):
 
 def checkBLSiteAccess(src, dst):
     blacklistedSites = {
-        '10.250.197.182'
+        '10.250.197.182',
     }
     if(dst in blacklistedSites):
         #print("\n Black Listed IP destination accessed by = " + src)
@@ -132,6 +133,10 @@ def findDownloads(request):
     anythingDownloaded = "false"
     f = open(uploaded_file_url, 'rb')
     pcap = dpkt.pcap.Reader(f)
+    src = ""
+    srcDst = {}
+    uniqueSrc = set()
+    BLAccess = set()
     for (ts, buf) in pcap:
         eth = dpkt.ethernet.Ethernet(buf)               # Unpack the Ethernet frame (mac src/dst, ethertype)
 
@@ -140,6 +145,7 @@ def findDownloads(request):
 
         ip = eth.data                                   # Now grab the data within the Ethernet frame (the IP packet)
         src = socket.inet_ntoa(ip.src)
+        dst = socket.inet_ntoa(ip.dst)
         if isinstance(ip.data, dpkt.tcp.TCP):           # Check for TCP in the transport layer
             tcp = ip.data                               # Set the TCP data
             try:                                        # Now see if we can parse the contents as a HTTP request
@@ -147,13 +153,27 @@ def findDownloads(request):
                 if http.method == 'GET':
                     uri = http.uri.lower()
                     if '.zip' in uri or '.ZIP' in uri:
+                        print src
+                        uniqueSrc.add(src)
+                        print(printRecord(src))
+                        srcDst[src] = dst
                         anythingDownloaded = "true"
                         print("\nZIP file downloaded by " + src + " from " + uri)
+
             except (dpkt.dpkt.NeedData, dpkt.dpkt.UnpackError):
                 continue
+
+    print uniqueSrc
+
+    for src in uniqueSrc:
+        if(printRecord(src) is not None):
+            BLAccess.add(printRecord(src))
+    markers = placeMarkers(BLAccess)
     if (anythingDownloaded is "false"):
         print("\nNo ZIP File Downloaded\n")
-    return HttpResponse(render_to_response('results.html', {'filename': filename}))
+
+    print markers
+    return HttpResponse(render_to_response('results1.html', {'src':src,'uri':uri,'data':markers,'filename': filename}))
 
 
 
