@@ -13,7 +13,6 @@ from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.shortcuts import render_to_response
 
-
 gi = pygeoip.GeoIP('GeoLiteCity.dat')
 def index(request):
     return render(request,'home.html')
@@ -21,9 +20,7 @@ def index(request):
 
 def printRecord(tgt):
     rec = gi.record_by_name(tgt)
-    if(rec is None):
-        return
-    else:
+    if(rec is not None):
         city = rec['city']
         country = rec['country_name']
         long = rec['longitude']
@@ -36,13 +33,75 @@ def checkBLSiteAccess(src, dst):
         '10.250.197.182'
     }
     if(dst in blacklistedSites):
-        print("\n Black Listed IP destination accessed by = " + src)
+        #print("\n Black Listed IP destination accessed by = " + src)
         uniqueLatLong = printRecord(src)
         return uniqueLatLong
     else:
         return 0
 
-def printPcap(uploaded_file_url):
+def extractIPs(uploaded_file_url):
+
+    return allSrcIPs
+
+
+def placeMarkers(ip_addressess):
+    markers = []
+    for ip_address in ip_addressess:
+        obj = {"IP": str(ip_address[0]), "Lat": str(ip_address[1]), "Long": str(ip_address[2]),
+               "City": str(ip_address[3]),
+               "Country": str(ip_address[4])}
+        markers.append(obj)
+        lat = str(ip_address[1])
+        lng = str(ip_address[2])
+        ip = str(ip_address[0])
+        city = str(ip_address[3])
+        country = str(ip_address[4])
+    return markers
+
+#*********************API's being called from Frontend***************************
+
+@csrf_exempt
+def findAllIPs(request):
+    fs = FileSystemStorage()
+    try:
+        pcapFile = request.FILES['file_upload']
+        filename = fs.save(pcapFile.name, pcapFile)
+        uploaded_file_url = fs.url(filename)
+    except:
+        print("\nFAILED SO REACHED EXCEPT")
+        filename = request.GET['filename']
+        print("\n filename = " + filename)
+        uploaded_file_url = fs.url(filename)
+        print("\nuploaded_file_url = " + uploaded_file_url)
+    f1 = open(uploaded_file_url, 'rb')
+    pcap = dpkt.pcap.Reader(f1)
+    src = ""
+    srcDst = {}
+    uniqueSrc = set()
+    for (ts, buf) in pcap:
+        try:
+            eth = dpkt.ethernet.Ethernet(buf)
+            ip = eth.data
+            src = socket.inet_ntoa(ip.src)
+            dst = socket.inet_ntoa(ip.dst)
+            if src not in uniqueSrc:
+                uniqueSrc.add(src)
+                srcDst[src] = dst
+        except:
+            pass
+    allSrcIPs = set()
+    for src in uniqueSrc:
+        if(printRecord(src) is not None):
+            allSrcIPs.add(printRecord(src))
+    markers = placeMarkers(allSrcIPs)
+
+    return HttpResponse(render_to_response('results.html', {'data': markers, 'filename' : filename}))
+
+
+def findBLAccessingIPs(request):
+    filename = request.GET['filename']
+    fs = FileSystemStorage()
+    uploaded_file_url = fs.url(filename)
     f1 = open(uploaded_file_url, 'rb')
     pcap = dpkt.pcap.Reader(f1)
     src = ""
@@ -65,9 +124,15 @@ def printPcap(uploaded_file_url):
         found = checkBLSiteAccess(src, srcDst[src])
         if found and found is not None:
             BLAccess.add(found)
-    return BLAccess
+    markers = placeMarkers(BLAccess)
+    return HttpResponse(render_to_response('results.html', {'data': markers, 'filename' : filename}))
 
-def findDownload(uploaded_file_url):
+
+
+def findDownloads(request):
+    fs = FileSystemStorage()
+    filename = request.GET['filename']
+    uploaded_file_url = fs.url(filename)
     anythingDownloaded = "false"
     f = open(uploaded_file_url, 'rb')
     pcap = dpkt.pcap.Reader(f)
@@ -92,27 +157,7 @@ def findDownload(uploaded_file_url):
                 continue
     if (anythingDownloaded is "false"):
         print("\nNo ZIP File Downloaded\n")
-
-
-@csrf_exempt
-def search(request):
-    pcapFile = request.FILES['file_upload']
-    fs = FileSystemStorage()
-    filename = fs.save(pcapFile.name, pcapFile)
-    uploaded_file_url = fs.url(filename)
-    unique = printPcap(uploaded_file_url)
-    findDownload(uploaded_file_url)
-    js = []
-    for item in unique:
-        obj = {"IP": str(item[0]), "Lat": str(item[1]), "Long": str(item[2]), "City": str(item[3]),
-               "Country": str(item[4])}
-        js.append(obj)
-        lat = str(item[1])
-        lng = str(item[2])
-        ip = str(item[0])
-        city = str(item[3])
-        country = str(item[4])
-    return HttpResponse(render_to_response('results.html', {'data': js}))
+    return HttpResponse(render_to_response('results.html', {'filename': filename}))
 
 
 
