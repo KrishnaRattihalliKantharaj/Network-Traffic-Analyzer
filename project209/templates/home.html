@@ -3,12 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <title>Network Traffic Analyser</title>
+    <style type="text/css">
+        body{
+       background-color:#FFECDC;
+       }
+      h4{
+       text-align:right;
+       border-bottom-style: solid;
+       border-width: 100%;
+       }
+    </style>
 </head>
 <body>
-    <p>Network traffic analyser</p>
-     <h4><form action="/findAllIPs/" method="post" enctype="multipart/form-data">
-                                  <input type="file" name="file_upload" accept=".pcap"><br>
-                                  <input type="submit">
-     </form> </h4>
+<h4><b>SJSU CMPE 209: Network Security ; Spring 2017</b>b> </h4>
+    <br>
+    <h1> Network Traffic Analyzer </h1>
+    <p> Upload a PCAP file
+    <form action="/findAllIPs/" method="post" enctype="multipart/form-data">
+    <input type="file" name="file_upload" accept=".pcap"><br>
+    <br><input type="submit">
+    </form>
+    </p>
+
 </body>
 </html>

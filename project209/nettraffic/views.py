@@ -12,6 +12,7 @@ from django.shortcuts import render
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.shortcuts import render_to_response
+THRESHOLD = 1000
 
 gi = pygeoip.GeoIP('GeoLiteCity.dat')
 def index(request):
@@ -169,5 +170,36 @@ def findDownloads(request):
     #print markers
     return HttpResponse(render_to_response('results1.html', {'src':src,'uri':uri,'data':markers,'filename': filename}))
 
+def findAttack(pcap):
+    print("\nreached")
+    pktCount = {}
+    for (ts, buf) in pcap:
+        try:
+            eth = dpkt.ethernet.Ethernet(buf)
+            ip = eth.data
+            src = socket.inet_ntoa(ip.src)
+            dst = socket.inet_ntoa(ip.dst)
+            tcp = ip.data
+            dport = tcp.dport
+            if dport == 80:
+                stream = src + ':' + dst
+                if pktCount.has_key(stream):
+                    pktCount[stream] = pktCount[stream] + 1
+                else:
+                    pktCount[stream] = 1
+        except:
+            pass
+
+    for stream in pktCount:
+        pktsSent = pktCount[stream]
+        if (pktsSent > THRESHOLD):
+            src = stream.split(':')[0]
+            dst = stream.split(':')[1]
+            stream2 = dst + ':' + src
+            if pktCount.has_key(stream2):
+                pktsSent2 = pktCount[stream2]
+
+            if not pktCount.has_key(stream2)  or   (pktsSent - pktsSent2)> THRESHOLD :
+                    print '[+] '+src+' attacked '+dst+' with '+ str(pktsSent) + ' pkts.'
 
 
