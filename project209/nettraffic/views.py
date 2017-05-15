@@ -91,8 +91,8 @@ def findAllIPs(request):
         if(printRecord(src) is not None):
             allSrcIPs.add(printRecord(src))
     markers = placeMarkers(allSrcIPs)
-
-    return HttpResponse(render_to_response('results.html', {'data': markers, 'filename' : filename, 'clicked' : clicked}))
+    attackDetails = findAttack(uploaded_file_url)
+    return HttpResponse(render_to_response('results.html', {'data': markers, 'filename' : filename, 'clicked' : clicked, 'attack' : attackDetails}))
 
 
 def findBLAccessingIPs(request):
@@ -133,6 +133,7 @@ def findDownloads(request):
     anythingDownloaded = "false"
     f = open(uploaded_file_url, 'rb')
     pcap = dpkt.pcap.Reader(f)
+
     src = ""
     srcDst = {}
     IPsDownloading = set()
@@ -168,10 +169,14 @@ def findDownloads(request):
         print("\nNo ZIP File Downloaded\n")
 
     #print markers
+
     return HttpResponse(render_to_response('results1.html', {'src':src,'uri':uri,'data':markers,'filename': filename}))
 
-def findAttack(pcap):
-    print("\nreached")
+def findAttack(uploaded_file_url):
+    f1 = open(uploaded_file_url, 'rb')
+    pcap = dpkt.pcap.Reader(f1)
+    attack = []
+    attack.append('0')
     pktCount = {}
     for (ts, buf) in pcap:
         try:
@@ -183,7 +188,7 @@ def findAttack(pcap):
             dport = tcp.dport
             if dport == 80:
                 stream = src + ':' + dst
-                if pktCount.has_key(stream):
+                if stream in pktCount:
                     pktCount[stream] = pktCount[stream] + 1
                 else:
                     pktCount[stream] = 1
@@ -196,10 +201,18 @@ def findAttack(pcap):
             src = stream.split(':')[0]
             dst = stream.split(':')[1]
             stream2 = dst + ':' + src
-            if pktCount.has_key(stream2):
+            if stream2 in pktCount:
                 pktsSent2 = pktCount[stream2]
 
-            if not pktCount.has_key(stream2)  or   (pktsSent - pktsSent2)> THRESHOLD :
-                    print '[+] '+src+' attacked '+dst+' with '+ str(pktsSent) + ' pkts.'
+            if not stream2 in pktCount  or   (pktsSent - pktsSent2)> THRESHOLD :
+                print("attacked!")
+                attack.append(src)
+                attack.append(dst)
+                attack.append(str(pktsSent))
+                attack[0] = '1'
+                print(attack)
+                return (attack)
+    return attack
+
 
 

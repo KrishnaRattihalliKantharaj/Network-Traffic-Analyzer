@@ -14,8 +14,7 @@
 		<div align="center"><h3>Here are the locations</h3></div>
 		<script>
 			var myData = {{ data|safe }};
-			console.log(myData);
-
+			console.log("myData = " + myData);
 			function initialize(){
 				var mapProp = {
 				  center:new google.maps.LatLng(myData[0].Lat, myData[0].Long),
