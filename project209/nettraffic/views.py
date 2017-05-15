@@ -170,7 +170,7 @@ def findDownloads(request):
 
     #print markers
 
-    return HttpResponse(render_to_response('results1.html', {'src':src,'uri':uri,'data':markers,'filename': filename}))
+    return HttpResponse(render_to_response('showDownloads.html', {'src':src, 'uri':uri, 'data':markers, 'filename': filename}))
 
 def findAttack(uploaded_file_url):
     f1 = open(uploaded_file_url, 'rb')
