@@ -3,9 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>Network Traffic Analyser</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     <style type="text/css">
         body{
-       background-color:#FFECDC;
+       background-color:;
        }
       h4{
        text-align:right;
@@ -15,15 +20,20 @@
     </style>
 </head>
 <body>
-<h4><b>SJSU CMPE 209: Network Security ; Spring 2017</b> </h4>
-    <br>
-    <h1> Network Traffic Analyzer </h1>
-    <p> Upload a PCAP file
-    <form action="/findAllIPs/" method="post" enctype="multipart/form-data">
-    <input type="file" name="file_upload" accept=".pcap"><br>
-    <br><input type="submit">
-    </form>
-    </p>
+    <div class = "col-sm-2"></div>
 
+    <center>
+        <div class = "col-sm-8">
+            <div style = "width: 400px">
+                <h3>SJSU CMPE 209 Network Security<br>Spring 2017</h3>
+                <br><br><br><br><br><br><br>
+                <h2> <legend>Network Traffic Analyzer </legend></h2>
+                <form action="/findAllIPs/" method="post" enctype="multipart/form-data">
+                    <input type="file" name="file_upload" accept=".pcap">
+                    <br><input class = "btn btn-success" type="submit">
+                </form>
+            </div>
+        </div>
+    </center>
 </body>
 </html>
