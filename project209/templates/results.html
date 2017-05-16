@@ -12,6 +12,7 @@
                 src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBKK8lh9l9TDfumALLS6Ko3vJr9addjfQs&callback=initMap">
         </script>
 		<div align="center"><h3>Here are the locations</h3></div>
+        <button class="btn btn-warning" style="margin-top: -100px"><a href = "/">Upload Another file</a></button>
 		<script>
 			var myData = {{ data|safe }};
 			console.log(myData);
@@ -57,7 +58,7 @@
                     if(attack[0] == '1'){
                         var message = "Alert!!" + attack[1] + " Attacked " + attack[2] + " with " + attack[3] + " packets!"
                         //alert(message);
-                        var k = '<div class="alert alert-danger"> <strong>Danger!</strong>'+message+'</div>'
+                        var k = '<div class="alert alert-danger" style = "width:700px; height:75px"> <p style = "font-size:20px"><strong>'+message+'</strong></p></div>'
                         document.write(k);
                     }
                 </script>

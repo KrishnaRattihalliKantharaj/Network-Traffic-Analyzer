@@ -12,7 +12,7 @@ from django.shortcuts import render
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.shortcuts import render_to_response
-THRESHOLD = 1000
+THRESHOLD = 30000
 
 gi = pygeoip.GeoIP('GeoLiteCity.dat')
 def index(request):
@@ -32,10 +32,12 @@ def printRecord(tgt):
 
 def checkBLSiteAccess(src, dst):
     blacklistedSites = {
-        '10.250.197.182',
+
+        '224.0.0.251',
+        '198.189.255.214'
     }
     if(dst in blacklistedSites):
-        #print("\n Black Listed IP destination accessed by = " + src)
+        print("\n Black Listed IP destination accessed by = " + src)
         uniqueLatLong = printRecord(src)
         return uniqueLatLong
     else:
