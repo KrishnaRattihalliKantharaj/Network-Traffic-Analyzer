@@ -39,8 +39,16 @@
 				<p><a href="/findBLAccessingIPs?filename={{ filename|safe }}">Show IP Addressess accessing Black Listed Sites</a></p>
 				<p><a href="/findDownloads?filename={{ filename|safe }}">Show IP Addressess Downloading from Illegal Sites</a></p>
                 <h4>The IP addressess that downloaded Files from black listed sites</h4>
-                <h5>User: {{ src|safe }} </h5>
-                <h5>URI: {{ uri|safe }} </h5>
+                <script>
+                    var user = {{ src|safe }}
+                    var uri = {{ uri|safe }}
+                    for (var i=0;i<user.length ;i++){
+                        var usr = '<h5>User:&nbsp&nbsp&nbsp'+user[i]+'</h5>'
+                        var uri1= '<h5>URI:&nbsp&nbsp&nbsp'+uri[i]+'</h5>'
+                        document.write(usr)
+                        document.write(uri1)
+                    }
+                </script>
 
 			</div>
 			<div class="col-sm-4">

@@ -116,12 +116,14 @@ def findBLAccessingIPs(request):
         except:
             pass
     BLAccess = set()
-    #print(srcDst)
+    print(srcDst)
+    #print(uniqueSrc)
     for src in uniqueSrc:
         found = checkBLSiteAccess(src, srcDst[src])
         if found and found is not None:
             BLAccess.add(found)
     markers = placeMarkers(BLAccess)
+    #print(BLAccess)
     return HttpResponse(render_to_response('results.html', {'data': markers, 'filename' : filename}))
 
 
@@ -133,6 +135,8 @@ def findDownloads(request):
     anythingDownloaded = "false"
     f = open(uploaded_file_url, 'rb')
     pcap = dpkt.pcap.Reader(f)
+    downloadingsrc = []
+    downloadinguri = []
 
     src = ""
     srcDst = {}
@@ -156,6 +160,8 @@ def findDownloads(request):
                     if '.zip' in uri or '.ZIP' in uri:
                         IPsDownloading.add(src)
                         srcDst[src] = dst
+                        downloadingsrc.append(src)
+                        downloadinguri.append(uri)
                         anythingDownloaded = "true"
                         #print("\n\nZIP file downloaded by " + src + " from " + uri + "\n\n")
 
@@ -170,7 +176,7 @@ def findDownloads(request):
 
     #print markers
 
-    return HttpResponse(render_to_response('showDownloads.html', {'src':src, 'uri':uri, 'data':markers, 'filename': filename}))
+    return HttpResponse(render_to_response('showDownloads.html', {'src':downloadingsrc, 'uri':downloadinguri, 'data':markers, 'filename': filename}))
 
 def findAttack(uploaded_file_url):
     f1 = open(uploaded_file_url, 'rb')
@@ -186,15 +192,15 @@ def findAttack(uploaded_file_url):
             dst = socket.inet_ntoa(ip.dst)
             tcp = ip.data
             dport = tcp.dport
-            if dport == 80:
+            if dport is 80 or 443:
                 stream = src + ':' + dst
                 if stream in pktCount:
+                    print(stream)
                     pktCount[stream] = pktCount[stream] + 1
                 else:
                     pktCount[stream] = 1
         except:
             pass
-
     for stream in pktCount:
         pktsSent = pktCount[stream]
         if (pktsSent > THRESHOLD):

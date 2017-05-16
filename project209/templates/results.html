@@ -41,9 +41,6 @@
 				<p><a href="/findBLAccessingIPs?filename={{ filename|safe }}">Show IP Addressess accessing Black Listed Sites</a></p>
 				<p><a href="/findDownloads?filename={{ filename|safe }}">Show IP Addressess Downloading from Illegal Sites</a></p>
                 <script>
-                    function sleep(ms) {
-                      return new Promise(resolve => setTimeout(resolve, ms));
-                    }
                     var myData = {{data|safe}};
                     if({{ clicked|safe }}){
                         for(i=0;i<myData.length;i++){
@@ -55,12 +52,13 @@
                         document.write(t);
                         }
                     }
-                    sleep(2000);
                     var attack = {{ attack|safe }}
                     console.log("attack[0] = " + attack[0]);
                     if(attack[0] == '1'){
                         var message = "Alert!!" + attack[1] + " Attacked " + attack[2] + " with " + attack[3] + " packets!"
-                        alert(message);
+                        //alert(message);
+                        var k = '<div class="alert alert-danger"> <strong>Danger!</strong>'+message+'</div>'
+                        document.write(k);
                     }
                 </script>
 			</div>
